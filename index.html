@@ -9,13 +9,13 @@ h1 {
 }
 body {
 	line-height: 1.5em;
-	text-align: justify;
+	text-align: center;
 	/* display: contents; */
 	--phosphor: #61f256;
 	font-weight: 300;
 	font-family: monospace;
 	margin: 2rem;
-	width: 40em;
+	max-width: 40em;
 	background-color: #0c0c0c;
 	color: var(--phosphor);
 	/* text-shadow: 0 0 0px, 0 0 6px, 0 0 12px, 0 0 0px; */
@@ -40,31 +40,27 @@ body {
 			This website converts between the <code>.sav</code> format used for GBA save files by emulators like Mesen, and the <code>.srm</code> format used by Retroarch. 
 
 			These two formats differ simply in the order of their bytes, with each group of 8 bytes reversed. This means that for example a 16 byte <code>.sav</code> file 
-			
+
 			<p><code>
-			00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+				00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
 			</code></p>
-			
+
 			would become the <code>.srm</code> file
 			<p><code>
-			07 06 05 04 03 02 01 09 0f 0e 0d 0c 0b 0a 09 08
+				07 06 05 04 03 02 01 09 0f 0e 0d 0c 0b 0a 09 08
 			</code></p>
 			and vice versa.
 		</div>
 		<br><br>
-		<div id="drop">Drag a .sav or .srm file here</div>
+		<div id="drop">Drag a <code>.sav</code> or <code>.srm</code> file here,<br> or click to open the file picker.</div>
+		<input id="fileInput" type="file" accept=".sav,.srm" hidden>
 
 		<script>
 			const GROUP_SIZE = 8;
 			const drop = document.getElementById("drop");
+			const fileInput = document.getElementById("fileInput");
 
-			drop.addEventListener("dragover", e => {
-				e.preventDefault();
-			});
-
-			drop.addEventListener("drop", async e => {
-				e.preventDefault();
-				const file = e.dataTransfer.files[0];
+			async function handleFile(file) {
 				if (!file) return;
 
 				const ext = file.name.split(".").pop();
@@ -103,8 +99,26 @@ body {
 				link.click();
 
 				URL.revokeObjectURL(url);
+			}
+
+			// Drag & drop
+			drop.addEventListener("dragover", e => e.preventDefault());
+			drop.addEventListener("drop", e => {
+				e.preventDefault();
+				handleFile(e.dataTransfer.files[0]);
+			});
+
+			// Click to open file picker
+			drop.addEventListener("click", () => {
+				fileInput.value = "";
+				fileInput.click();
+			});
+
+			fileInput.addEventListener("change", () => {
+				handleFile(fileInput.files[0]);
 			});
 		</script>
+
 
 	</body>
 </html>
