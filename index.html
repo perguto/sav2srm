@@ -37,11 +37,19 @@ body {
 	  border: 2px dashed #888;
 	  padding: 3rem;
 	  text-align: center;
+	  cursor: pointer;
+  }
+
+  #drop:hover{
+	  background-color: #222;
+	  transition-duration: .3s;
   }
 		</style>
+
 	</head>
 	<body>
 		<div id="page">
+			<button>Click</button>
 			<h1>GBA save file converter</h1>
 			<br>
 			<div>
@@ -55,7 +63,7 @@ body {
 
 				would become the <code>.srm</code> file
 				<p><code>
-					07 06 05 04 03 02 01 09 0f 0e 0d 0c 0b 0a 09 08
+					07 06 05 04 03 02 01 00 0f 0e 0d 0c 0b 0a 09 08
 				</code></p>
 				and vice versa.
 			</div>
