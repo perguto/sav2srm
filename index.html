@@ -8,19 +8,26 @@ h1 {
 	text-align: center;
 }
 body {
+	display: flex;
+	justify-content: center;
+	margin: 0;
+	min-height: 100vh;
+
 	line-height: 1.5em;
-	text-align: center;
-	/* display: contents; */
+	text-align: justify;
 	--phosphor: #61f256;
 	font-weight: 300;
 	font-family: monospace;
-	margin: 2rem;
-	max-width: 40em;
 	background-color: #0c0c0c;
 	color: var(--phosphor);
-	/* text-shadow: 0 0 0px, 0 0 6px, 0 0 12px, 0 0 0px; */
 	text-shadow: 0 0 6px;
 	-webkit-font-smoothing: antialiased;
+}
+
+#page {
+	text-align: center;
+	width: 40em;
+	margin: 2rem;
 }
   code {
 	  color: #aaa;
@@ -34,91 +41,93 @@ body {
 		</style>
 	</head>
 	<body>
-		<h1>GBA save file converter</h1>
-		<br>
-		<div>
-			This website converts between the <code>.sav</code> format used for GBA save files by emulators like Mesen, and the <code>.srm</code> format used by Retroarch. 
+		<div id="page">
+			<h1>GBA save file converter</h1>
+			<br>
+			<div>
+				This website converts between the <code>.sav</code> format used for GBA save files by emulators like Mesen, and the <code>.srm</code> format used by Retroarch. 
 
-			These two formats differ simply in the order of their bytes, with each group of 8 bytes reversed. This means that for example a 16 byte <code>.sav</code> file 
+				These two formats differ simply in the order of their bytes, with each group of 8 bytes reversed. This means that for example a 16 byte <code>.sav</code> file 
 
-			<p><code>
-				00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
-			</code></p>
+				<p><code>
+					00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+				</code></p>
 
-			would become the <code>.srm</code> file
-			<p><code>
-				07 06 05 04 03 02 01 09 0f 0e 0d 0c 0b 0a 09 08
-			</code></p>
-			and vice versa.
-		</div>
-		<br><br>
-		<div id="drop">Drag a <code>.sav</code> or <code>.srm</code> file here,<br> or click to open the file picker.</div>
-		<input id="fileInput" type="file" accept=".sav,.srm" hidden>
+				would become the <code>.srm</code> file
+				<p><code>
+					07 06 05 04 03 02 01 09 0f 0e 0d 0c 0b 0a 09 08
+				</code></p>
+				and vice versa.
+			</div>
+			<br><br>
+			<div id="drop">Drag a <code>.sav</code> or <code>.srm</code> file here,<br> or click to open the file picker.</div>
+			<input id="fileInput" type="file" accept=".sav,.srm" hidden>
 
-		<script>
-			const GROUP_SIZE = 8;
-			const drop = document.getElementById("drop");
-			const fileInput = document.getElementById("fileInput");
+			<script>
+				const GROUP_SIZE = 8;
+				const drop = document.getElementById("drop");
+				const fileInput = document.getElementById("fileInput");
 
-			async function handleFile(file) {
-				if (!file) return;
+				async function handleFile(file) {
+					if (!file) return;
 
-				const ext = file.name.split(".").pop();
-				if (ext !== "sav" && ext !== "srm") {
-					alert("Only .sav or .srm files are supported.");
-					return;
-				}
-
-				const buffer = await file.arrayBuffer();
-				const data = new Uint8Array(buffer);
-
-				if (data.length % GROUP_SIZE !== 0) {
-					alert("File size is not divisible by 8.");
-					return;
-				}
-
-				for (let i = 0; i < data.length; i += GROUP_SIZE) {
-					for (let k = 0; k < GROUP_SIZE / 2; k++) {
-						const a = i + k;
-						const b = i + GROUP_SIZE - 1 - k;
-						const tmp = data[a];
-						data[a] = data[b];
-						data[b] = tmp;
+					const ext = file.name.split(".").pop();
+					if (ext !== "sav" && ext !== "srm") {
+						alert("Only .sav or .srm files are supported.");
+						return;
 					}
+
+					const buffer = await file.arrayBuffer();
+					const data = new Uint8Array(buffer);
+
+					if (data.length % GROUP_SIZE !== 0) {
+						alert("File size is not divisible by 8.");
+						return;
+					}
+
+					for (let i = 0; i < data.length; i += GROUP_SIZE) {
+						for (let k = 0; k < GROUP_SIZE / 2; k++) {
+							const a = i + k;
+							const b = i + GROUP_SIZE - 1 - k;
+							const tmp = data[a];
+							data[a] = data[b];
+							data[b] = tmp;
+						}
+					}
+
+					const outExt = ext === "sav" ? "srm" : "sav";
+					const outName = file.name.replace(/\.[^.]+$/, "." + outExt);
+
+					const blob = new Blob([data], { type: "application/octet-stream" });
+					const url = URL.createObjectURL(blob);
+
+					const link = document.createElement("a");
+					link.href = url;
+					link.download = outName;
+					link.click();
+
+					URL.revokeObjectURL(url);
 				}
 
-				const outExt = ext === "sav" ? "srm" : "sav";
-				const outName = file.name.replace(/\.[^.]+$/, "." + outExt);
+				// Drag & drop
+				drop.addEventListener("dragover", e => e.preventDefault());
+				drop.addEventListener("drop", e => {
+					e.preventDefault();
+					handleFile(e.dataTransfer.files[0]);
+				});
 
-				const blob = new Blob([data], { type: "application/octet-stream" });
-				const url = URL.createObjectURL(blob);
+				// Click to open file picker
+				drop.addEventListener("click", () => {
+					fileInput.value = "";
+					fileInput.click();
+				});
 
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = outName;
-				link.click();
+				fileInput.addEventListener("change", () => {
+					handleFile(fileInput.files[0]);
+				});
+			</script>
 
-				URL.revokeObjectURL(url);
-			}
-
-			// Drag & drop
-			drop.addEventListener("dragover", e => e.preventDefault());
-			drop.addEventListener("drop", e => {
-				e.preventDefault();
-				handleFile(e.dataTransfer.files[0]);
-			});
-
-			// Click to open file picker
-			drop.addEventListener("click", () => {
-				fileInput.value = "";
-				fileInput.click();
-			});
-
-			fileInput.addEventListener("change", () => {
-				handleFile(fileInput.files[0]);
-			});
-		</script>
-
+		</div>
 
 	</body>
 </html>
